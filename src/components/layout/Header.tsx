@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { cn } from '@/utils/cn'
-import { Search, Bell, Sun, Moon, LogOut, ChevronDown, Settings, User } from 'lucide-react'
+import { Search, Bell, Sun, Moon, LogOut, ChevronDown, Settings, User, Menu } from 'lucide-react'
 import { useAuth } from '@/features/auth'
 import { Avatar } from '@/components/ui/Avatar'
 import { useTheme } from '@/hooks/useTheme'
 
 interface HeaderProps {
   className?: string
+  onMobileMenuClick?: () => void
 }
 
-export function Header({ className }: HeaderProps) {
+export function Header({ className, onMobileMenuClick }: HeaderProps) {
   const { theme, toggleTheme } = useTheme()
   const { profile, signOut } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -24,8 +25,16 @@ export function Header({ className }: HeaderProps) {
         className
       )}
     >
+      {/* Mobile Menu Button */}
+      <button
+        onClick={onMobileMenuClick}
+        className="md:hidden mr-4 p-2 -ml-2 text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--surface-secondary) rounded-lg transition-colors"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
       {/* Search */}
-      <div className="flex-1 max-w-md">
+      <div className="flex-1 max-w-md hidden md:block">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--text-tertiary)" />
           <input
@@ -48,37 +57,36 @@ export function Header({ className }: HeaderProps) {
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-2 ml-4">
-        {/* Theme toggle */}
+      <div className="flex items-center gap-2 sm:gap-4 ml-auto">
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--interactive-hover) transition-colors cursor-pointer"
-          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          className="relative p-2 text-(--text-tertiary) hover:text-(--text-secondary) hover:bg-(--surface-tertiary) rounded-full transition-colors group cursor-pointer"
         >
-          {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          {theme === 'dark' ? (
+            <Sun className="h-5 w-5 group-hover:scale-110 transition-transform" />
+          ) : (
+            <Moon className="h-5 w-5 group-hover:scale-110 transition-transform" />
+          )}
         </button>
 
-        {/* Notifications */}
-        <button className="relative p-2 rounded-lg text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--interactive-hover) transition-colors cursor-pointer">
-          <Bell className="h-4 w-4" />
-          {/* Notification dot */}
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-danger-500 rounded-full ring-2 ring-(--surface-primary)" />
+        <button className="hidden sm:block relative p-2 text-(--text-tertiary) hover:text-(--text-secondary) hover:bg-(--surface-tertiary) rounded-full transition-colors group cursor-pointer">
+          <Bell className="h-5 w-5 group-hover:scale-110 transition-transform" />
+          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-danger-500 ring-2 ring-(--surface-primary)" />
         </button>
 
-        {/* Separator */}
-        <div className="h-6 w-px bg-(--border-primary) mx-1" />
+        <div className="hidden sm:block w-px h-6 bg-(--border-secondary) mx-2" />
 
         {/* User menu */}
         <div className="relative">
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-(--interactive-hover) transition-colors cursor-pointer"
+            className="flex items-center gap-2 pl-2 pr-1 py-1 sm:pl-3 sm:pr-2 sm:py-1.5 rounded-full hover:bg-(--surface-tertiary) transition-colors cursor-pointer group"
           >
             <Avatar
               name={profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}`.trim() : 'User'}
               size="sm"
             />
-            <div className="hidden md:block text-left">
+            <div className="hidden sm:block text-left">
               <p className="text-xs font-medium text-(--text-primary) leading-tight">
                 {profile?.first_name} {profile?.last_name}
               </p>

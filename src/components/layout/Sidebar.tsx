@@ -52,9 +52,11 @@ const navItems: NavItem[] = [
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
+  mobileOpen?: boolean
+  onMobileClose?: () => void
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
   const location = useLocation()
   const { profile } = useAuth()
   const userRole = profile?.role || 'staff'
@@ -73,16 +75,29 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   }, {})
 
   return (
-    <aside
-      className={cn(
-        'fixed top-0 left-0 h-screen z-40',
-        'bg-(--sidebar-bg) text-(--sidebar-text)',
-        'border-r border-(--sidebar-border)',
-        'flex flex-col',
-        'transition-all duration-300 ease-in-out',
-        collapsed ? 'w-[68px]' : 'w-[240px]'
+    <>
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={onMobileClose}
+        />
       )}
-    >
+
+      <aside
+        className={cn(
+          'fixed top-0 left-0 h-screen z-50',
+          'bg-(--sidebar-bg) text-(--sidebar-text)',
+          'border-r border-(--sidebar-border)',
+          'flex flex-col',
+          'transition-all duration-300 ease-in-out',
+          // Desktop width
+          collapsed ? 'md:w-[68px]' : 'md:w-[240px]',
+          // Mobile width & transform
+          'w-[240px]',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        )}
+      >
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-(--sidebar-border)">
         <div className="flex items-center gap-3 overflow-hidden">
@@ -142,8 +157,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         ))}
       </nav>
 
-      {/* Collapse Toggle */}
-      <div className="p-3 border-t border-(--sidebar-border)">
+      {/* Desktop Collapse Toggle */}
+      <div className="p-3 border-t border-(--sidebar-border) hidden md:block">
         <button
           onClick={onToggle}
           className={cn(
@@ -163,5 +178,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </button>
       </div>
     </aside>
+    </>
   )
 }

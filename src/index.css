@@ -1,0 +1,238 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════
+   NEXUS DESIGN SYSTEM — Theme Tokens
+   ═══════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ─── Typography ─── */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* ─── Brand Colors ─── */
+  --color-brand-50: oklch(0.97 0.01 220);
+  --color-brand-100: oklch(0.94 0.02 220);
+  --color-brand-200: oklch(0.88 0.04 220);
+  --color-brand-300: oklch(0.80 0.07 220);
+  --color-brand-400: oklch(0.70 0.11 220);
+  --color-brand-500: oklch(0.60 0.14 220);
+  --color-brand-600: oklch(0.52 0.14 220);
+  --color-brand-700: oklch(0.44 0.12 220);
+  --color-brand-800: oklch(0.37 0.10 220);
+  --color-brand-900: oklch(0.30 0.08 220);
+
+  /* ─── Accent (Teal/Ocean) ─── */
+  --color-accent-50: oklch(0.97 0.02 180);
+  --color-accent-100: oklch(0.93 0.04 180);
+  --color-accent-200: oklch(0.86 0.07 180);
+  --color-accent-300: oklch(0.76 0.10 180);
+  --color-accent-400: oklch(0.66 0.13 180);
+  --color-accent-500: oklch(0.56 0.13 180);
+  --color-accent-600: oklch(0.48 0.12 180);
+  --color-accent-700: oklch(0.40 0.10 180);
+
+  /* ─── Success (Green) ─── */
+  --color-success-50: oklch(0.97 0.02 150);
+  --color-success-100: oklch(0.93 0.04 150);
+  --color-success-500: oklch(0.60 0.16 150);
+  --color-success-600: oklch(0.52 0.14 150);
+  --color-success-700: oklch(0.44 0.12 150);
+
+  /* ─── Warning (Amber) ─── */
+  --color-warning-50: oklch(0.97 0.02 85);
+  --color-warning-100: oklch(0.93 0.05 85);
+  --color-warning-500: oklch(0.75 0.15 85);
+  --color-warning-600: oklch(0.65 0.15 85);
+  --color-warning-700: oklch(0.55 0.13 85);
+
+  /* ─── Danger (Red) ─── */
+  --color-danger-50: oklch(0.97 0.01 25);
+  --color-danger-100: oklch(0.93 0.04 25);
+  --color-danger-500: oklch(0.60 0.18 25);
+  --color-danger-600: oklch(0.52 0.17 25);
+  --color-danger-700: oklch(0.44 0.15 25);
+
+  /* ─── Shadows ─── */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* ─── Radii ─── */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* ─── Animations ─── */
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-slide-in: slide-in 0.25s ease-out;
+  --animate-slide-up: slide-up 0.25s ease-out;
+  --animate-scale-in: scale-in 0.2s ease-out;
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES — Light Mode (default)
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Surfaces */
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8fafc;
+  --surface-tertiary: #f1f5f9;
+  --surface-elevated: #ffffff;
+  --surface-overlay: rgba(0, 0, 0, 0.5);
+  --surface-inset: #e2e8f0;
+
+  /* Sidebar */
+  --sidebar-bg: #0f172a;
+  --sidebar-text: #cbd5e1;
+  --sidebar-text-active: #ffffff;
+  --sidebar-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-active: rgba(255, 255, 255, 0.12);
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #ffffff;
+  --text-link: oklch(0.52 0.14 220);
+
+  /* Borders */
+  --border-primary: #e2e8f0;
+  --border-secondary: #f1f5f9;
+  --border-focus: oklch(0.52 0.14 220);
+
+  /* Interactive */
+  --interactive-hover: rgba(0, 0, 0, 0.04);
+  --interactive-active: rgba(0, 0, 0, 0.08);
+
+  /* Misc */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+
+  color-scheme: light;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE
+   ═══════════════════════════════════════════════════════════ */
+
+.dark {
+  /* Surfaces */
+  --surface-primary: #0f172a;
+  --surface-secondary: #1e293b;
+  --surface-tertiary: #334155;
+  --surface-elevated: #1e293b;
+  --surface-overlay: rgba(0, 0, 0, 0.7);
+  --surface-inset: #0f172a;
+
+  /* Sidebar */
+  --sidebar-bg: #020617;
+  --sidebar-text: #94a3b8;
+  --sidebar-text-active: #f1f5f9;
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-active: rgba(255, 255, 255, 0.10);
+  --sidebar-border: rgba(255, 255, 255, 0.04);
+
+  /* Text */
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-inverse: #0f172a;
+  --text-link: oklch(0.70 0.11 220);
+
+  /* Borders */
+  --border-primary: #334155;
+  --border-secondary: #1e293b;
+  --border-focus: oklch(0.60 0.14 220);
+
+  /* Interactive */
+  --interactive-hover: rgba(255, 255, 255, 0.06);
+  --interactive-active: rgba(255, 255, 255, 0.10);
+
+  /* Misc */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #475569;
+  --scrollbar-thumb-hover: #64748b;
+
+  color-scheme: dark;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background-color: var(--surface-secondary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ─── Focus Ring ─── */
+*:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KEYFRAMES
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

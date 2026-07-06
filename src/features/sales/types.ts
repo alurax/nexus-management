@@ -1,6 +1,6 @@
-import { z } from 'zod'
+export type SalesOrderStatus = 'pending' | 'completed' | 'refunded' | 'cancelled' | 'care_of'
 
-export type SalesOrderStatus = 'pending' | 'completed' | 'refunded' | 'cancelled'
+export type PaymentMethod = 'cash' | 'gcash' | 'ewallet'
 
 export interface SalesOrder {
   id: string
@@ -9,7 +9,7 @@ export interface SalesOrder {
   total_amount: number
   discount_amount: number
   tax_amount: number
-  payment_method: string | null
+  payment_method: PaymentMethod | string | null
   notes: string | null
   created_by: string | null
   created_at: string
@@ -42,20 +42,17 @@ export interface CartItem {
   stock_available: number
 }
 
-export const processSaleSchema = z.object({
-  customer_id: z.string().nullable().optional(),
-  location_id: z.string().min(1, 'Location is required'),
-  payment_method: z.string().min(1, 'Payment method is required'),
-  discount: z.number().min(0, 'Discount cannot be negative'),
-  tax: z.number().min(0, 'Tax cannot be negative'),
-  items: z.array(
-    z.object({
-      product_id: z.string(),
-      quantity: z.number().min(1),
-      unit_price: z.number().min(0),
-    })
-  ).min(1, 'Cart cannot be empty'),
-  created_at: z.string().nullable().optional(),
-})
-
-export type ProcessSalePayload = z.infer<typeof processSaleSchema>
+export interface ProcessSalePayload {
+  customer_id?: string | null
+  location_id: string
+  payment_method: string
+  discount: number
+  tax: number
+  items: Array<{
+    product_id: string
+    quantity: number
+    unit_price: number
+  }>
+  created_at?: string
+  status?: string
+}

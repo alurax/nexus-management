@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote } from 'lucide-react'
+import { Search, ShoppingCart, Plus, Minus, Trash2, Banknote, Wallet, Smartphone } from 'lucide-react'
 import { useInventory } from '@/features/inventory/api'
 import { useLocations } from '@/features/locations/api'
 import { useCustomers } from '@/features/customers/api'
+import { useStoreSettings } from '@/features/settings/api'
 import { useProcessSale } from './api'
-import type { CartItem } from './types'
+import type { CartItem, PaymentMethod, SalesOrderStatus } from './types'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/utils/currency'
 
@@ -15,22 +16,60 @@ export function POSPage() {
   const { data: inventory, isLoading: loadingInventory } = useInventory()
   const { data: locations } = useLocations()
   const { data: customers } = useCustomers()
+  const { data: storeSettings } = useStoreSettings()
   const processSale = useProcessSale()
 
+  // State
   const [selectedLocationId, setSelectedLocationId] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
   const [cart, setCart] = useState<CartItem[]>([])
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('')
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [discount, setDiscount] = useState<number>(0)
   const [dateOverride, setDateOverride] = useState<string>('')
+  const [cashGiven, setCashGiven] = useState<number | ''>('')
+  
+  // Track if we've loaded from localStorage
+  const [hasLoadedPersistedState, setHasLoadedPersistedState] = useState(false)
 
-  // Filter products based on selected location and search query
+  // 1. Load from localStorage & Default Settings
+  useEffect(() => {
+    if (hasLoadedPersistedState) return
+
+    try {
+      const savedState = localStorage.getItem('nexus_pos_state')
+      if (savedState) {
+        const parsed = JSON.parse(savedState)
+        if (parsed.cart) setCart(parsed.cart)
+        if (parsed.location_id) setSelectedLocationId(parsed.location_id)
+        if (parsed.customer_id) setSelectedCustomerId(parsed.customer_id)
+        if (parsed.discount) setDiscount(parsed.discount)
+      } else if (storeSettings?.default_location_id) {
+        setSelectedLocationId(storeSettings.default_location_id)
+      }
+    } catch (e) {
+      console.error("Failed to load POS state", e)
+    }
+    setHasLoadedPersistedState(true)
+  }, [hasLoadedPersistedState, storeSettings])
+
+  // 2. Persist to localStorage
+  useEffect(() => {
+    if (!hasLoadedPersistedState) return
+    
+    localStorage.setItem('nexus_pos_state', JSON.stringify({
+      cart,
+      location_id: selectedLocationId,
+      customer_id: selectedCustomerId,
+      discount
+    }))
+  }, [cart, selectedLocationId, selectedCustomerId, discount, hasLoadedPersistedState])
+
+  // Filter products
   const displayProducts = useMemo(() => {
     if (!inventory || !selectedLocationId) return []
     
     return inventory.filter(p => {
-      // Match search query
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
         const matchesName = p.name.toLowerCase().includes(query)
@@ -42,7 +81,7 @@ export function POSPage() {
       const stockAtLocation = p.inventory_levels?.find(l => l.location_id === selectedLocationId)?.quantity || 0
       return {
         ...p,
-        stockAtLocation: p.type === 'service' ? 9999 : stockAtLocation // Services have unlimited "stock"
+        stockAtLocation: p.type === 'service' ? 9999 : stockAtLocation
       }
     })
   }, [inventory, selectedLocationId, searchQuery])
@@ -71,7 +110,7 @@ export function POSPage() {
         sku: product.sku,
         description: product.description,
         quantity: 1,
-        unit_price: product.base_price, // selling at base price
+        unit_price: product.base_price,
         stock_available: product.stockAtLocation
       }]
     })
@@ -91,6 +130,13 @@ export function POSPage() {
       return item
     }))
   }
+  
+  const updateCartPrice = (productId: string, newPrice: number) => {
+    if (newPrice < 0) return
+    setCart(prev => prev.map(item => 
+      item.product_id === productId ? { ...item, unit_price: newPrice } : item
+    ))
+  }
 
   const removeFromCart = (productId: string) => {
     setCart(prev => prev.filter(item => item.product_id !== productId))
@@ -98,10 +144,17 @@ export function POSPage() {
 
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
   const cartTotal = cartSubtotal - discount
+  
+  const changeDue = (paymentMethod === 'cash' && typeof cashGiven === 'number' && cashGiven >= cartTotal) 
+    ? cashGiven - cartTotal 
+    : null
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (status: SalesOrderStatus = 'completed') => {
     if (cart.length === 0) return toast.error('Cart is empty')
     if (!selectedLocationId) return toast.error('Please select a location')
+    if (paymentMethod === 'cash' && typeof cashGiven === 'number' && cashGiven < cartTotal && status === 'completed') {
+      return toast.error('Cash given is less than the total amount')
+    }
     
     try {
       await processSale.mutateAsync({
@@ -110,6 +163,7 @@ export function POSPage() {
         discount: discount,
         tax: 0,
         payment_method: paymentMethod,
+        status: status,
         items: cart.map(item => ({
           product_id: item.product_id,
           quantity: item.quantity,
@@ -118,14 +172,18 @@ export function POSPage() {
         created_at: dateOverride ? new Date(dateOverride).toISOString() : undefined
       })
       
-      // Reset cart on success
-      toast.success('Sale completed successfully')
+      toast.success(status === 'care_of' ? 'Sale logged as Care Of' : 'Sale completed successfully')
+      
+      // Reset POS state
       setCart([])
       setDiscount(0)
       setSelectedCustomerId('')
       setDateOverride('')
+      setCashGiven('')
+      // Clear persistence
+      localStorage.removeItem('nexus_pos_state')
     } catch (error) {
-      // Error handled by mutation
+      // Handled by mutation
     }
   }
 
@@ -255,15 +313,19 @@ export function POSPage() {
               <ul className="space-y-1">
                 {cart.map(item => (
                   <li key={item.product_id} className="p-3 bg-(--surface-secondary) rounded-lg border border-(--border-primary)">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex justify-between items-start mb-2 gap-2">
+                      <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm text-(--text-primary) truncate">{item.name}</div>
-                        {item.description && (
-                          <div className="text-[11px] text-(--text-tertiary) line-clamp-2 mt-0.5 leading-tight mb-1">
-                            {item.description}
-                          </div>
-                        )}
-                        <div className="text-xs text-(--text-secondary)">{formatCurrency(Number(item.unit_price))} each</div>
+                        <div className="text-xs text-(--text-secondary) flex items-center gap-1 mt-0.5">
+                          <Input
+                            type="number"
+                            value={item.unit_price}
+                            onChange={(e) => updateCartPrice(item.product_id, Number(e.target.value))}
+                            className="h-6 w-20 text-xs px-1"
+                            title="Override Unit Price"
+                          />
+                          <span>each</span>
+                        </div>
                       </div>
                       <div className="font-semibold text-sm text-(--text-primary)">
                         {formatCurrency(item.quantity * item.unit_price)}
@@ -300,7 +362,7 @@ export function POSPage() {
             )}
           </div>
 
-          <div className="border-t border-(--border-primary) p-4 space-y-4">
+          <div className="border-t border-(--border-primary) p-4 space-y-4 overflow-y-auto max-h-[350px]">
             
             <div className="space-y-2">
               <select
@@ -317,28 +379,38 @@ export function POSPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setPaymentMethod('cash')}
-                  className={`flex-1 flex items-center justify-center gap-2 h-9 rounded-lg border text-sm font-medium transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-all ${
                     paymentMethod === 'cash' 
                       ? 'bg-(--brand-primary) text-white border-(--brand-primary)' 
                       : 'bg-(--surface-primary) text-(--text-secondary) border-(--border-primary) hover:bg-(--surface-secondary)'
                   }`}
                 >
-                  <Banknote className="h-4 w-4" /> Cash
+                  <Banknote className="h-3.5 w-3.5" /> Cash
                 </button>
                 <button
-                  onClick={() => setPaymentMethod('card')}
-                  className={`flex-1 flex items-center justify-center gap-2 h-9 rounded-lg border text-sm font-medium transition-all ${
-                    paymentMethod === 'card' 
+                  onClick={() => setPaymentMethod('gcash')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-all ${
+                    paymentMethod === 'gcash' 
                       ? 'bg-(--brand-primary) text-white border-(--brand-primary)' 
                       : 'bg-(--surface-primary) text-(--text-secondary) border-(--border-primary) hover:bg-(--surface-secondary)'
                   }`}
                 >
-                  <CreditCard className="h-4 w-4" /> Card
+                  <Smartphone className="h-3.5 w-3.5" /> GCash
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('ewallet')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-all ${
+                    paymentMethod === 'ewallet' 
+                      ? 'bg-(--brand-primary) text-white border-(--brand-primary)' 
+                      : 'bg-(--surface-primary) text-(--text-secondary) border-(--border-primary) hover:bg-(--surface-secondary)'
+                  }`}
+                >
+                  <Wallet className="h-3.5 w-3.5" /> E-Wallet
                 </button>
               </div>
             </div>
 
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2 text-sm bg-(--surface-secondary) p-3 rounded-lg border border-(--border-primary)">
               <div className="flex justify-between text-(--text-secondary)">
                 <span>Subtotal</span>
                 <span>{formatCurrency(cartSubtotal)}</span>
@@ -363,6 +435,30 @@ export function POSPage() {
               </div>
             </div>
 
+            {/* Cash Calculator */}
+            {paymentMethod === 'cash' && cartTotal > 0 && (
+              <div className="space-y-2 text-sm bg-(--surface-primary) p-3 rounded-lg border border-(--border-primary)">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-(--text-primary)">Cash Given</span>
+                  <div className="w-32">
+                    <Input 
+                      type="number" 
+                      value={cashGiven} 
+                      onChange={e => setCashGiven(e.target.value ? Number(e.target.value) : '')}
+                      placeholder="0.00"
+                      className="h-8 text-right font-medium"
+                    />
+                  </div>
+                </div>
+                {changeDue !== null && (
+                  <div className="flex justify-between items-center text-success-600 font-medium">
+                    <span>Change Due</span>
+                    <span className="text-lg">{formatCurrency(changeDue)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="pt-2 border-t border-(--border-primary)">
               <div className="flex flex-col gap-1 mb-2">
                 <label className="text-xs font-medium text-(--text-secondary)">Advanced: Date Override</label>
@@ -372,18 +468,29 @@ export function POSPage() {
                   onChange={e => setDateOverride(e.target.value)}
                   className="h-8 text-xs"
                 />
-                <p className="text-[10px] text-(--text-tertiary)">Leave blank for "Right Now"</p>
               </div>
             </div>
 
-            <Button 
-              className="w-full h-12 text-lg font-semibold" 
-              onClick={handleCheckout}
-              disabled={cart.length === 0 || !selectedLocationId}
-              loading={processSale.isPending}
-            >
-              Checkout
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                className="flex-1 h-12 text-sm font-semibold border-warning-500 text-warning-600 hover:bg-warning-50"
+                onClick={() => handleCheckout('care_of')}
+                disabled={cart.length === 0 || !selectedLocationId}
+                loading={processSale.isPending}
+                title="Log as unpaid/care of"
+              >
+                Care Of
+              </Button>
+              <Button 
+                className="flex-[2] h-12 text-lg font-semibold" 
+                onClick={() => handleCheckout('completed')}
+                disabled={cart.length === 0 || !selectedLocationId}
+                loading={processSale.isPending}
+              >
+                Checkout
+              </Button>
+            </div>
           </div>
         </div>
 

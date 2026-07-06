@@ -11,6 +11,7 @@ export interface Expense {
   amount: number
   date: string
   description: string
+  payment_method: string
   receipt_url: string | null
   created_by: string | null
   created_at: string
@@ -30,6 +31,7 @@ export const expenseSchema = z.object({
   amount: z.number().min(0.01, 'Amount must be greater than 0'),
   date: z.string().min(1, 'Date is required'),
   description: z.string().min(1, 'Description is required'),
+  payment_method: z.string().min(1, 'Payment method is required'),
   receipt_url: z.string().url().optional().or(z.literal('')),
 })
 

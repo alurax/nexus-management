@@ -3,7 +3,7 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { DataTable } from '@/components/data-table/DataTable'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Button } from '@/components/ui/Button'
-import { Plus, Tag, Trash2, Link } from 'lucide-react'
+import { Plus, Tag, Trash2, Link, Edit3 } from 'lucide-react'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/utils/currency'
 import { useExpenses, useDeleteExpense } from './api'
@@ -20,6 +20,7 @@ export function ExpenseListPage() {
 
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false)
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false)
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
   
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null)
@@ -42,6 +43,14 @@ export function ExpenseListPage() {
       cell: (info) => (
         <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-(--surface-secondary) text-(--text-secondary) border border-(--border-primary)">
           {info.getValue() || '-'}
+        </span>
+      ),
+    }),
+    columnHelper.accessor('payment_method', {
+      header: 'Payment Method',
+      cell: (info) => (
+        <span className="capitalize text-sm font-medium text-(--text-secondary)">
+          {info.getValue() || 'cash'}
         </span>
       ),
     }),
@@ -69,11 +78,23 @@ export function ExpenseListPage() {
       id: 'actions',
       header: '',
       cell: (info) => (
-        <div className="flex items-center justify-end">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 w-8 p-0 text-danger-500 hover:text-danger-600 hover:bg-danger-50"
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedExpense(info.row.original)
+              setExpenseDialogOpen(true)
+            }}
+            aria-label="Edit expense"
+            className="text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--surface-secondary)"
+          >
+            <Edit3 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-danger-500 hover:text-danger-600 hover:bg-danger-50"
             onClick={() => {
               setDeletingExpense(info.row.original)
               setDeleteConfirmOpen(true)
@@ -97,7 +118,10 @@ export function ExpenseListPage() {
             <Tag className="h-4 w-4 mr-2" />
             Categories
           </Button>
-          <Button onClick={() => setExpenseDialogOpen(true)}>
+          <Button onClick={() => {
+            setSelectedExpense(null)
+            setExpenseDialogOpen(true)
+          }}>
             <Plus className="h-4 w-4 mr-2" />
             Log Expense
           </Button>
@@ -113,8 +137,14 @@ export function ExpenseListPage() {
         />
       </div>
 
-      <ExpenseDialog open={expenseDialogOpen} onClose={() => setExpenseDialogOpen(false)} />
-      <CategoryDialog open={categoryDialogOpen} onClose={() => setCategoryDialogOpen(false)} />
+      <ExpenseDialog 
+        open={expenseDialogOpen} 
+        onClose={() => {
+          setExpenseDialogOpen(false)
+          setSelectedExpense(null)
+        }} 
+        expense={selectedExpense}
+      /><CategoryDialog open={categoryDialogOpen} onClose={() => setCategoryDialogOpen(false)} />
 
       <ConfirmDialog
         open={deleteConfirmOpen}

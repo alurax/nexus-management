@@ -1,5 +1,5 @@
 import { PageContainer } from '@/components/layout/PageContainer'
-import { Card, CardContent } from '@/components/ui/Card'
+import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import {
   Package,
@@ -9,13 +9,24 @@ import {
   TentTree,
 } from 'lucide-react'
 import { formatCurrency } from '@/utils/currency'
-import { useDashboardMetrics } from './api'
+import { useDashboardMetrics, useRevenueTrend } from './api'
 import { useInventory } from '@/features/inventory/api'
 import { Link } from 'react-router'
 import { useMemo } from 'react'
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer
+} from 'recharts'
+import { format, parseISO } from 'date-fns'
 
 export function DashboardPage() {
   const { data: metrics, isLoading: loadingMetrics } = useDashboardMetrics()
+  const { data: revenueTrend, isLoading: loadingTrend } = useRevenueTrend()
   const { data: inventory } = useInventory()
 
   const lowStockItems = useMemo(() => {
@@ -92,11 +103,70 @@ export function DashboardPage() {
         {/* Main Chart Area */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="h-[400px]">
-            <CardContent className="p-6 h-full flex flex-col items-center justify-center text-(--text-tertiary)">
-              <div className="text-center space-y-2">
-                <div className="text-lg font-medium">Revenue Trend</div>
-                <div className="text-sm">Historical analytics coming soon.</div>
-              </div>
+            <CardHeader>
+              <h3 className="font-semibold text-(--text-primary)">Revenue Trend (Last 7 Days)</h3>
+            </CardHeader>
+            <CardContent className="p-6 h-[calc(100%-4rem)]">
+              {loadingTrend ? (
+                <div className="h-full flex items-center justify-center">
+                  <Spinner size="md" />
+                </div>
+              ) : revenueTrend && revenueTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--brand-primary)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--brand-primary)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-primary)" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(val) => format(parseISO(val), 'MMM d')}
+                      stroke="var(--text-tertiary)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      dy={10}
+                    />
+                    <YAxis 
+                      tickFormatter={(val) => `₱${val.toLocaleString()}`}
+                      stroke="var(--text-tertiary)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      dx={-10}
+                    />
+                    <RechartsTooltip 
+                      formatter={(value: any) => [formatCurrency(Number(value)), 'Revenue']}
+                      labelFormatter={(label) => format(parseISO(label as string), 'MMM d, yyyy')}
+                      contentStyle={{ 
+                        backgroundColor: 'var(--surface-elevated)', 
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: '0.5rem',
+                        color: 'var(--text-primary)'
+                      }}
+                      itemStyle={{ color: 'var(--text-secondary)' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="amount" 
+                      stroke="var(--brand-primary)" 
+                      strokeWidth={2}
+                      fillOpacity={1} 
+                      fill="url(#colorAmount)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-(--text-tertiary)">
+                  <div className="text-center space-y-2">
+                    <div className="text-lg font-medium">No Data Available</div>
+                    <div className="text-sm">There are no completed sales in the last 7 days.</div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

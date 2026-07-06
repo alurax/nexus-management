@@ -5,17 +5,19 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { FormField } from '@/components/forms/FormField'
-import { expenseSchema, type ExpenseFormData } from './types'
-import { useCreateExpense, useExpenseCategories } from './api'
+import { expenseSchema, type ExpenseFormData, type Expense } from './types'
+import { useCreateExpense, useUpdateExpense, useExpenseCategories } from './api'
 import { format } from 'date-fns'
 
 interface ExpenseDialogProps {
   open: boolean
   onClose: () => void
+  expense?: Expense | null
 }
 
-export function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
+export function ExpenseDialog({ open, onClose, expense }: ExpenseDialogProps) {
   const createMutation = useCreateExpense()
+  const updateMutation = useUpdateExpense()
   const { data: categories } = useExpenseCategories()
 
   const {
@@ -30,25 +32,42 @@ export function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
       amount: 0,
       date: format(new Date(), 'yyyy-MM-dd'),
       description: '',
+      payment_method: 'cash',
       receipt_url: '',
     },
   })
 
   useEffect(() => {
     if (open) {
-      reset({
-        category_id: '',
-        amount: 0,
-        date: format(new Date(), 'yyyy-MM-dd'),
-        description: '',
-        receipt_url: '',
-      })
+      if (expense) {
+        reset({
+          category_id: expense.category_id,
+          amount: expense.amount,
+          date: expense.date,
+          description: expense.description,
+          payment_method: expense.payment_method || 'cash',
+          receipt_url: expense.receipt_url || '',
+        })
+      } else {
+        reset({
+          category_id: '',
+          amount: 0,
+          date: format(new Date(), 'yyyy-MM-dd'),
+          description: '',
+          payment_method: 'cash',
+          receipt_url: '',
+        })
+      }
     }
-  }, [open, reset])
+  }, [open, expense, reset])
 
   const onSubmit = async (data: ExpenseFormData) => {
     try {
-      await createMutation.mutateAsync(data)
+      if (expense) {
+        await updateMutation.mutateAsync({ id: expense.id, data })
+      } else {
+        await createMutation.mutateAsync(data)
+      }
       onClose()
     } catch (error) {
       // Handled by mutation toast
@@ -60,8 +79,8 @@ export function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
       <div className="flex flex-col">
         <div className="px-6 py-4 border-b border-(--border-primary) flex justify-between items-center">
           <div>
-            <h2 className="text-lg font-semibold text-(--text-primary)">
-              Log Expense
+            <h2 className="text-xl font-bold text-(--text-primary)">
+              {expense ? 'Edit Expense' : 'Log New Expense'}
             </h2>
             <p className="text-sm text-(--text-tertiary)">
               Record a new business expense.
@@ -111,6 +130,18 @@ export function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
               />
             </FormField>
 
+            <FormField label="Payment Method" error={errors.payment_method?.message} required>
+              <select
+                {...register('payment_method')}
+                disabled={isSubmitting}
+                className="w-full h-10 px-3 rounded-lg border border-(--border-primary) bg-(--surface-primary) text-sm focus:outline-none focus:border-brand-500"
+              >
+                <option value="cash">Cash</option>
+                <option value="gcash">GCash</option>
+                <option value="ewallet">E-Wallet</option>
+              </select>
+            </FormField>
+
             <FormField label="Receipt URL (Optional)" error={errors.receipt_url?.message}>
               <Input
                 {...register('receipt_url')}
@@ -124,7 +155,7 @@ export function ExpenseDialog({ open, onClose }: ExpenseDialogProps) {
                 Cancel
               </Button>
               <Button type="submit" loading={isSubmitting}>
-                Log Expense
+                {expense ? 'Save Changes' : 'Log Expense'}
               </Button>
             </div>
           </form>

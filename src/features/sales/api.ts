@@ -21,6 +21,7 @@ export function useSalesOrders() {
           ),
           sales_order_items (
             id,
+            product_id,
             quantity,
             unit_price,
             total_price,
@@ -50,7 +51,8 @@ export function useProcessSale() {
         p_discount: data.discount,
         p_tax: data.tax,
         p_items: data.items,
-        p_created_at: data.created_at || null
+        p_created_at: data.created_at || null,
+        p_status: data.status || 'completed'
       })
 
       if (error) throw error
@@ -64,6 +66,92 @@ export function useProcessSale() {
     },
     onError: (error: Error) => {
       toast.error('Failed to process sale: ' + error.message)
+    },
+  })
+}
+
+export interface EditSalePayload {
+  order_id: string
+  discount: number
+  tax: number
+  payment_method: string
+  status: string
+  items: Array<{
+    product_id: string
+    quantity: number
+    unit_price: number
+  }>
+}
+
+export function useEditSale() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: EditSalePayload) => {
+      const { error } = await supabase.rpc('edit_sale', {
+        p_order_id: data.order_id,
+        p_discount: data.discount,
+        p_tax: data.tax,
+        p_payment_method: data.payment_method,
+        p_status: data.status,
+        p_items: data.items
+      })
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SALES_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_METRICS_QUERY_KEY })
+      toast.success('Sale updated successfully')
+    },
+    onError: (error) => {
+      toast.error('Failed to update sale: ' + error.message)
+    },
+  })
+}
+
+export function useUpdateSaleStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ order_id, status }: { order_id: string, status: string }) => {
+      const { error } = await supabase.rpc('update_sale_status', {
+        p_order_id: order_id,
+        p_status: status
+      })
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SALES_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_METRICS_QUERY_KEY })
+    },
+    onError: (error) => {
+      toast.error('Failed to update status: ' + error.message)
+    },
+  })
+}
+
+export function useDeleteSale() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (order_id: string) => {
+      const { error } = await supabase.rpc('delete_sale', {
+        p_order_id: order_id
+      })
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SALES_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_METRICS_QUERY_KEY })
+      toast.success('Sale deleted successfully')
+    },
+    onError: (error) => {
+      toast.error('Failed to delete sale: ' + error.message)
     },
   })
 }

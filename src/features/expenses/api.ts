@@ -102,6 +102,26 @@ export function useCreateExpense() {
   })
 }
 
+export function useUpdateExpense() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: ExpenseFormData }) => {
+      const payload = {
+        ...data,
+        receipt_url: data.receipt_url || null,
+      }
+      const { error } = await supabase.from('expenses').update(payload).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: EXPENSES_QUERY_KEY })
+      toast.success('Expense updated successfully')
+    },
+    onError: (error: Error) => toast.error('Failed: ' + error.message),
+  })
+}
+
 export function useDeleteExpense() {
   const queryClient = useQueryClient()
 

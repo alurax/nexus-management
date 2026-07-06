@@ -52,6 +52,15 @@ export function SalesListPage() {
     }, 0)
   }, [filteredSales])
 
+  const totalCareOfAmount = useMemo(() => {
+    return filteredSales.reduce((sum, sale) => {
+      if (sale.status === 'care_of') {
+        return sum + Number(sale.total_amount)
+      }
+      return sum
+    }, 0)
+  }, [filteredSales])
+
   const totalExpenses = useMemo(() => {
     if (!expenses) return 0
     let filteredExpenses = expenses
@@ -245,6 +254,13 @@ export function SalesListPage() {
             <span className="text-xs font-medium text-white/80 mb-1">Net on Hand</span>
             <span className="text-lg font-bold text-white">
               {formatCurrency(netCashOnHand)}
+            </span>
+          </div>
+          
+          <div className="bg-(--surface-primary) px-4 py-3 rounded-xl border border-(--border-primary) flex flex-col">
+            <span className="text-xs font-medium text-(--text-tertiary) mb-1">Unpaid (Care Of)</span>
+            <span className="text-lg font-bold text-warning-500">
+              {formatCurrency(totalCareOfAmount)}
             </span>
           </div>
         </div>

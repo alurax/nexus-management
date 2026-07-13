@@ -23,6 +23,7 @@ export function useInventory() {
             updated_at
           )
         `)
+        .eq('is_active', true)
         .order('name')
       
       if (error) throw error

@@ -18,6 +18,7 @@ export function useProducts() {
             name
           )
         `)
+        .eq('is_active', true)
         .order('created_at', { ascending: false })
       
       if (error) throw error
@@ -70,19 +71,17 @@ export function useDeleteProduct() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('products').delete().eq('id', id)
+      const { error } = await supabase.from('products').update({ is_active: false }).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEY })
+      // We should also invalidate inventory since the product is now gone
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
       toast.success('Product deleted successfully')
     },
     onError: (error: Error) => {
-      if (error.message.includes('violates foreign key constraint')) {
-        toast.error('Cannot delete product because it is in use by inventory or transactions.')
-      } else {
-        toast.error('Failed to delete product: ' + error.message)
-      }
+      toast.error('Failed to delete product: ' + error.message)
     },
   })
 }

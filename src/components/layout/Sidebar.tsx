@@ -86,7 +86,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
 
       <aside
         className={cn(
-          'fixed top-0 left-0 h-screen z-50',
+          'fixed top-0 left-0 h-[100dvh] z-50',
           'bg-(--sidebar-bg) text-(--sidebar-text)',
           'border-r border-(--sidebar-border)',
           'flex flex-col',

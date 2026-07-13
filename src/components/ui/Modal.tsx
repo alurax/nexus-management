@@ -67,7 +67,7 @@ export function Modal({ open, onClose, children, className, size = 'md' }: Modal
         className={cn(
           'relative w-full mx-4 bg-(--surface-primary)',
           'rounded-2xl shadow-xl border border-(--border-primary)',
-          'animate-scale-in',
+          'animate-scale-in flex flex-col max-h-[95dvh]',
           sizeStyles[size],
           className
         )}
@@ -102,7 +102,7 @@ export function ModalHeader({ children, className, onClose }: ModalHeaderProps) 
 
 export function ModalContent({ children, className }: ModalContentProps) {
   return (
-    <div className={cn('px-6 py-4 max-h-[70vh] overflow-y-auto', className)}>
+    <div className={cn('px-6 py-4 flex-1 overflow-y-auto min-h-0', className)}>
       {children}
     </div>
   )

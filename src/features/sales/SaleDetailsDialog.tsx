@@ -15,7 +15,7 @@ export function SaleDetailsDialog({ open, onClose, order }: SaleDetailsDialogPro
 
   return (
     <Modal open={open} onClose={onClose} size="md">
-      <div className="flex flex-col max-h-[80vh]">
+      <div className="flex flex-col max-h-[90dvh]">
         <div className="px-6 py-4 border-b border-(--border-primary) flex justify-between items-center bg-(--surface-primary)">
           <div>
             <h2 className="text-lg font-semibold text-(--text-primary)">

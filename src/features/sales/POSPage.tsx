@@ -192,7 +192,7 @@ export function POSPage() {
       title="Point of Sale"
       description="Create sales orders and process customer payments."
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
+      <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6 lg:h-[calc(100dvh-12rem)] min-h-[600px]">
         
         {/* Left Side: Product Browser */}
         <div className="lg:col-span-2 flex flex-col gap-4">

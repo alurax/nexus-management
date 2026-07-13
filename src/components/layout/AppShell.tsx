@@ -15,7 +15,7 @@ export function AppShell() {
   }, [location.pathname])
 
   return (
-    <div className="min-h-screen bg-(--surface-secondary)">
+    <div className="min-h-[100dvh] bg-(--surface-secondary)">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -25,7 +25,7 @@ export function AppShell() {
       
       <div
         className={cn(
-          'transition-all duration-300 ease-in-out min-h-screen flex flex-col',
+          'transition-all duration-300 ease-in-out min-h-[100dvh] flex flex-col min-w-0',
           // Desktop margins
           'md:ml-[240px]',
           sidebarCollapsed && 'md:ml-[68px]',
@@ -34,7 +34,7 @@ export function AppShell() {
         )}
       >
         <Header onMobileMenuClick={() => setMobileMenuOpen(true)} />
-        <main className="p-4 md:p-6 flex-1 overflow-x-hidden">
+        <main className="p-4 md:p-6 flex-1 overflow-x-hidden min-w-0">
           <Outlet />
         </main>
       </div>

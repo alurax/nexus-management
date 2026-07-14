@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Modal } from '@/components/ui/Modal'
+import { Modal, ModalHeader, ModalContent, ModalFooter } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { FormField } from '@/components/forms/FormField'
@@ -76,19 +76,19 @@ export function ExpenseDialog({ open, onClose, expense }: ExpenseDialogProps) {
 
   return (
     <Modal open={open} onClose={onClose} size="md">
-      <div className="flex flex-col">
-        <div className="px-6 py-4 border-b border-(--border-primary) flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-bold text-(--text-primary)">
-              {expense ? 'Edit Expense' : 'Log New Expense'}
-            </h2>
-            <p className="text-sm text-(--text-tertiary)">
-              Record a new business expense.
-            </p>
-          </div>
+      <ModalHeader onClose={onClose}>
+        <div className="flex flex-col">
+          <span className="text-xl font-bold text-(--text-primary)">
+            {expense ? 'Edit Expense' : 'Log New Expense'}
+          </span>
+          <span className="text-sm text-(--text-tertiary)">
+            Record a new business expense.
+          </span>
         </div>
-        <div className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      </ModalHeader>
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+        <ModalContent className="space-y-4">
             
             <FormField label="Category" error={errors.category_id?.message} required>
               <select
@@ -150,17 +150,17 @@ export function ExpenseDialog({ open, onClose, expense }: ExpenseDialogProps) {
               />
             </FormField>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-(--border-primary)">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button type="submit" loading={isSubmitting}>
-                {expense ? 'Save Changes' : 'Log Expense'}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
+        </ModalContent>
+
+        <ModalFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={isSubmitting}>
+            {expense ? 'Save Changes' : 'Log Expense'}
+          </Button>
+        </ModalFooter>
+      </form>
     </Modal>
   )
 }

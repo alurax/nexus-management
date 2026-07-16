@@ -37,6 +37,7 @@ export function useCreateProduct() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
       toast.success('Product created successfully')
     },
     onError: (error: Error) => {
@@ -58,6 +59,7 @@ export function useUpdateProduct() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
       toast.success('Product updated successfully')
     },
     onError: (error: Error) => {
